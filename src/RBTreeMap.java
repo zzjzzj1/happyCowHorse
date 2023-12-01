@@ -190,6 +190,7 @@ public class RBTreeMap<K extends Comparable<K>, V> {
             // 获取节点的父节点
             RBNode<K, V> parent = node.parent;
             assert brother != null;
+            // 如果兄弟节点为红色只需要旋转一次就能让他的兄弟节点变为黑色
             if (brother.isRed()) {
                 solveDeleteBlackNoSonTempBrotherRed(node, brother, parent);
                 continue;
