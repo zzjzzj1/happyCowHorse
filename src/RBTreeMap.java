@@ -128,7 +128,7 @@ public class RBTreeMap<K extends Comparable<K>, V> {
             deleteTwoSon(waitDelete);
             return tempValue;
         }
-        // 如果删除的是红色节点且没有儿子
+        // 如果删除的是黑色节点且没有儿子
         if (waitDelete.isBlack() && sonNumber == 0) {
             deleteBlackNoSon(waitDelete);
             return tempValue;
