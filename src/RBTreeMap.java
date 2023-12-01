@@ -181,6 +181,38 @@ public class RBTreeMap<K extends Comparable<K>, V> {
         rotateRight(brother, parent);
     }
 
+    private boolean judgeBlackNoSonOut(RBNode<K, V> node, RBNode<K, V> brother, RBNode<K, V> parent) {
+        // 如果兄弟节点为黑色且兄弟节点又红色儿子，则可以将红色儿子借过来从而达到平衡
+        if (isParentLeft(node)) {
+            if (brother.right != null && brother.right.isRed()) {
+                balanceDeleteRightRight(brother, parent);
+                return true;
+            }
+            if (brother.left != null && brother.left.isRed()) {
+                balanceDeleteRightLeft(brother, parent);
+                return true;
+            }
+
+        } else {
+            if (brother.left != null && brother.left.isRed()) {
+                balanceDeleteLeftLeft(brother, parent);
+                return true;
+            }
+            if (brother.right != null && brother.right.isRed()) {
+                balanceDeleteLeftRight(brother, parent);
+                return true;
+            }
+        }
+        // 设x为node节点的原始黑色路径长度
+        // 如果没有红色节点，且父亲为红色，则一次染色可以结束（左侧黑色路径长度 x - 1, 右侧 x - 1)
+        if (parent.isRed()) {
+            parent.setBlack();
+            brother.setRed();
+            return true;
+        }
+        return false;
+    }
+
 
     private void deleteBlackNoSonTemp(RBNode<K, V> node) {
         // 出口情形， 不平衡因子达到根节点，可以忽略该因子
@@ -195,33 +227,7 @@ public class RBTreeMap<K extends Comparable<K>, V> {
                 solveDeleteBlackNoSonTempBrotherRed(node, brother, parent);
                 continue;
             }
-            // 设x为node节点的原始黑色路径长度
-            if (isParentLeft(node)) {
-                // 如果兄弟节点为黑色
-                if (brother.right != null && brother.right.isRed()) {
-                    balanceDeleteRightRight(brother, parent);
-                    return;
-                }
-                if (brother.left != null && brother.left.isRed()) {
-                    balanceDeleteRightLeft(brother, parent);
-                    return;
-                }
-
-            } else {
-                // 同上述流程完全相等！！！！！！！！
-                if (brother.left != null && brother.left.isRed()) {
-                    balanceDeleteLeftLeft(brother, parent);
-                    return;
-                }
-                if (brother.right != null && brother.right.isRed()) {
-                    balanceDeleteLeftRight(brother, parent);
-                    return;
-                }
-            }
-            // 如果没有红色节点，且父亲为红色，则一次染色可以结束（左侧黑色路径长度 x - 1, 右侧 x - 1)
-            if (parent.isRed()) {
-                parent.setBlack();
-                brother.setRed();
+            if (judgeBlackNoSonOut(node, brother, parent)) {
                 return;
             }
             // 如果在本层不能解决平衡因子，上推不平衡因子位置，向上寻求解决方案！！！
