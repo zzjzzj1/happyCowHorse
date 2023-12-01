@@ -383,9 +383,9 @@ public class RBTreeMap<K extends Comparable<K>, V> {
 
     /**
      * cur作为支点左旋转
-     grandpa(黑)                                           grandpa(黑）
+                grandpa(黑)                                           grandpa(黑）
      parent(红）                 uncle()    ------>              cur(红）            uncle(转变成左左形)
-     cur(红)                             parent(红)
+                cur(红)                             parent(红)
      */
     private RBNode<K, V> balanceLeftRight(RBNode<K, V> cur, RBNode<K, V> parent) {
         if (cur.isRed() && parent.isRed()) {
