@@ -40,6 +40,23 @@ class BPlusTreeMap<K extends Comparable<K>, V> {
         return value;
     }
 
+
+    /*
+                    b+树保证每个节点的个数大于n / 2 !!,
+             此处分为两种情况讨论, 合并和借用相邻节点的数据。
+           a.借用
+
+            （3, 5, 8）        delete 5               （3, 6, 8）
+        （1,3）(3, 5) (6,7,8)     ->            （1,3）(3, 6) (7,8)
+           b.合并
+            （3, 5, 8）        delete 5                  (3,8）
+        （1,3）(3, 5) (6,8)       ->                   (1,3）(3,6,8)
+                可以看到借用不会让上层节点数量变少
+                合并会连锁触发上层的节点数量变更
+                时间复杂度(log(n)， 这个地方肯定要比红黑慢)
+
+     */
+
     private void solveDelete(NodeGroup<K, V> nodeGroup, int position) {
         fixAfterDeleteIndexNode(nodeGroup, position);
         nodeGroup.nodeList.remove(position);
@@ -236,9 +253,17 @@ class BPlusTreeMap<K extends Comparable<K>, V> {
         return leftList;
     }
 
+    /*
+                b+树保证每个节点个数都小于n, 当插入元素时，若元素个数超出限制，则分裂节点
+
+        (0, 1, 2, 3)        ->                 (1)
+                                        （0, 1）-> (2, 3）
+     */
     private void fixAfterInsertion(NodeGroup<K, V> nodeGroup) {
         NodeGroup<K, V> cur = nodeGroup;
+        // 确保每个节点中元素都 < 度数
         while (cur.nodeList.size() > this.order) {
+            // 分裂节点
             List<Node<K, V>> splitNodeListLeft = getSplitNodeListLeft(cur);
             NodeGroup<K, V> nodeGroupLeft = createSplitNodeGroup(cur, splitNodeListLeft);
             Node<K, V> indexNode = createIndexNode(nodeGroupLeft);
