@@ -52,11 +52,7 @@ class BPlusTreeMap<K extends Comparable<K>, V> {
                 right = cur;
             }
             if (left.nodeList.size() + right.nodeList.size() <= order) {
-                solveMerge(left, right);
-                cur = left.parent;
-                int deletePos = cur.searchInsertPosition(left.lastNode().key);
-                fixAfterDeleteIndexNode(cur, deletePos);
-                cur.nodeList.remove(deletePos);
+                cur = solveMerge(left, right);
                 continue;
             }
             if (left == cur) {
@@ -120,7 +116,7 @@ class BPlusTreeMap<K extends Comparable<K>, V> {
         }
     }
 
-    private void solveMerge(NodeGroup<K, V> left, NodeGroup<K, V> right) {
+    private NodeGroup<K, V> solveMerge(NodeGroup<K, V> left, NodeGroup<K, V> right) {
         List<Node<K, V>> temp = new ArrayList<>();
         temp.addAll(left.nodeList);
         temp.addAll(right.nodeList);
@@ -133,11 +129,15 @@ class BPlusTreeMap<K extends Comparable<K>, V> {
         right.left = left.left;
         if (left == head) {
             this.head = right;
-            return;
         }
         if (left.left != null) {
             left.left.right = right;
         }
+        NodeGroup<K, V> parent = left.parent;
+        int deletePos = parent.searchInsertPosition(left.lastNode().key);
+        fixAfterDeleteIndexNode(parent, deletePos);
+        parent.nodeList.remove(deletePos);
+        return parent;
     }
 
     // 删除索引节点
