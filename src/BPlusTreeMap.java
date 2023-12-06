@@ -108,15 +108,13 @@ class BPlusTreeMap<K extends Comparable<K>, V> {
     private void getNodeFromRight(NodeGroup<K, V> current) {
         NodeGroup<K, V> right = current.right;
         int number = halfOrder - current.nodeList.size();
-        List<Node<K, V>> currentRes = new ArrayList<>(current.nodeList);
         for (int i = 0; i < number; i++) {
             Node<K, V> node = right.nodeList.get(i);
-            currentRes.add(node);
+            current.nodeList.add(node);
             if (node.next != null) {
                 node.next.parent = current;
             }
         }
-        current.nodeList = currentRes;
         right.nodeList = right.nodeList.subList(number, right.nodeList.size());
     }
 
