@@ -381,7 +381,7 @@ class BPlusTreeMap<K extends Comparable<K>, V> {
             bPlusTreeMap.remove(mockData.get(i));
         }
         System.out.println("b+树删除用时:" + (System.currentTimeMillis() - startTime));
-        List<Integer> res = mockData.subList(mockData.size() - 10, mockData.size());
+        List<Integer> res = mockData.subList(mockData.size() - 20, mockData.size());
         res.sort(Comparator.comparingInt(integer -> integer));
         System.out.println(res);
         System.out.println(bPlusTreeMap.keySet());
