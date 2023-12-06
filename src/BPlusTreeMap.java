@@ -1,7 +1,4 @@
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
 
 class BPlusTreeMap<K extends Comparable<K>, V> {
 
@@ -58,7 +55,6 @@ class BPlusTreeMap<K extends Comparable<K>, V> {
      */
 
     private void solveDelete(NodeGroup<K, V> nodeGroup, int position) {
-        fixAfterDeleteIndexNode(nodeGroup, position);
         nodeGroup.nodeList.remove(position);
         NodeGroup<K, V> cur = nodeGroup;
         while (cur != root && cur.nodeList.size() < halfOrder) {
@@ -72,13 +68,11 @@ class BPlusTreeMap<K extends Comparable<K>, V> {
                 cur = solveMerge(left, right);
                 continue;
             }
-            if (left == cur) {
-                getNodeFromRight(cur);
-                break;
-            }
-            getNodeFromLeft(cur);
+            solveGetNodeFromNeighbor(cur, left);
+            cur = left;
             break;
         }
+        solveLastIndexChange(cur);
         if (cur == root && cur.nodeList.isEmpty() && cur.next != null) {
             this.root = cur.next;
             this.root.parent = null;
@@ -86,9 +80,17 @@ class BPlusTreeMap<K extends Comparable<K>, V> {
     }
 
 
+    private void solveGetNodeFromNeighbor(NodeGroup<K, V> cur, NodeGroup<K, V> left) {
+        if (left == cur) {
+            getNodeFromRight(cur);
+            return ;
+        }
+        getNodeFromLeft(cur);
+    }
+
+
     private void getNodeFromLeft(NodeGroup<K, V> current) {
         NodeGroup<K, V> left = current.left;
-        K lastKey = left.lastNode().key;
         int number = halfOrder - current.nodeList.size();
         List<Node<K, V>> currentRes = new ArrayList<>();
         for (int i = left.nodeList.size() - number; i < left.nodeList.size(); i++) {
@@ -101,13 +103,10 @@ class BPlusTreeMap<K extends Comparable<K>, V> {
         currentRes.addAll(current.nodeList);
         current.nodeList = currentRes;
         left.nodeList = left.nodeList.subList(0, left.nodeList.size() - number);
-        K replaceKey = left.lastNode().key;
-        solveLastIndexChange(left, left.nodeList.size() - 1, lastKey, replaceKey);
     }
 
     private void getNodeFromRight(NodeGroup<K, V> current) {
         NodeGroup<K, V> right = current.right;
-        K lastKey = current.lastNode().key;
         int number = halfOrder - current.nodeList.size();
         List<Node<K, V>> currentRes = new ArrayList<>(current.nodeList);
         for (int i = 0; i < number; i++) {
@@ -119,17 +118,21 @@ class BPlusTreeMap<K extends Comparable<K>, V> {
         }
         current.nodeList = currentRes;
         right.nodeList = right.nodeList.subList(number, right.nodeList.size());
-        K replaceKey = current.lastNode().key;
-        solveLastIndexChange(current, current.nodeList.size() - 1, lastKey, replaceKey);
     }
 
-    private void solveLastIndexChange(NodeGroup<K, V> nodeGroup, int position, K lastKey, K replaceKey) {
-        while (nodeGroup != root && position == nodeGroup.nodeList.size() - 1 && nodeGroup.right != null) {
+    private void solveLastIndexChange(NodeGroup<K, V> nodeGroup) {
+        while (nodeGroup != root) {
             NodeGroup<K, V> parent = nodeGroup.parent;
-            int i = parent.searchInsertPosition(lastKey);
-            parent.nodeList.get(i).key = replaceKey;
+            Node<K, V> parentNode = nodeGroup.parentNode;
+            if (parentNode == null) {
+                return;
+            }
+            K key = nodeGroup.lastNode().key;
+            if (parentNode.key == key) {
+                return ;
+            }
+            parentNode.key = key;
             nodeGroup = parent;
-            position = i;
         }
     }
 
@@ -151,20 +154,9 @@ class BPlusTreeMap<K extends Comparable<K>, V> {
             left.left.right = right;
         }
         NodeGroup<K, V> parent = left.parent;
-        int deletePos = parent.searchInsertPosition(left.lastNode().key);
-        fixAfterDeleteIndexNode(parent, deletePos);
+        int deletePos = parent.searchInsertPosition(left.parentNode.key);
         parent.nodeList.remove(deletePos);
         return parent;
-    }
-
-    // 删除索引节点
-    private void fixAfterDeleteIndexNode(NodeGroup<K, V> nodeGroup, int position) {
-        if (nodeGroup == root) {
-            return ;
-        }
-        K key = nodeGroup.nodeList.get(position).key;
-        K replaceKey = nodeGroup.nodeList.get(nodeGroup.nodeList.size() - 2).key;
-        solveLastIndexChange(nodeGroup, position, key, replaceKey);
     }
 
     private V getVal(K key) {
@@ -298,7 +290,7 @@ class BPlusTreeMap<K extends Comparable<K>, V> {
     private Node<K, V> createIndexNode(NodeGroup<K, V> nodeGroupLeft) {
         Node<K, V> node = new Node<>();
         node.key = nodeGroupLeft.lastNode().key;
-        node.next = nodeGroupLeft;
+        node.setNext(nodeGroupLeft);
         return node;
     }
 
@@ -362,6 +354,40 @@ class BPlusTreeMap<K extends Comparable<K>, V> {
         }
     }
 
+    public static void main(String[] args) {
+
+        BPlusTreeMap<Integer, Integer> bPlusTreeMap = new BPlusTreeMap<>(100);
+        List<Integer> mockData = new ArrayList<>();
+        int testNumber = 2000000;
+        System.out.println("-------------------------------性能测试：" + testNumber + "个元素随机插入，查询，删除----------------------------------" );
+        for (int i = 0; i < testNumber; i++) {
+            mockData.add(i);
+        }
+        Collections.shuffle(mockData);
+        long startTime = System.currentTimeMillis();
+        for (Integer item : mockData) {
+            bPlusTreeMap.put(item, item);
+        }
+        System.out.println("b+树插入用时:" + (System.currentTimeMillis() - startTime));
+        Collections.shuffle(mockData);
+        startTime = System.currentTimeMillis();
+        for (Integer item : mockData) {
+            bPlusTreeMap.get(item);
+        }
+        System.out.println("b+树查询用时:" + (System.currentTimeMillis() - startTime));
+        Collections.shuffle(mockData);
+        startTime = System.currentTimeMillis();
+        for (int i = 0; i < mockData.size() - 20; i++) {
+            bPlusTreeMap.remove(mockData.get(i));
+        }
+        System.out.println("b+树删除用时:" + (System.currentTimeMillis() - startTime));
+        List<Integer> res = mockData.subList(mockData.size() - 10, mockData.size());
+        res.sort(Comparator.comparingInt(integer -> integer));
+        System.out.println(res);
+        System.out.println(bPlusTreeMap.keySet());
+
+    }
+
 
     private static class NodeGroup<K extends Comparable<K>, V> {
         List<Node<K, V>> nodeList;
@@ -369,6 +395,7 @@ class BPlusTreeMap<K extends Comparable<K>, V> {
         NodeGroup<K, V> next;
         NodeGroup<K, V> left;
         NodeGroup<K, V> right;
+        Node<K, V> parentNode;
         int order;
         boolean bottom;
 
@@ -416,6 +443,13 @@ class BPlusTreeMap<K extends Comparable<K>, V> {
         @Override
         public String toString() {
             return key.toString();
+        }
+
+        private void setNext(NodeGroup<K, V> nodeGroup) {
+            this.next = nodeGroup;
+            if (nodeGroup != null) {
+                nodeGroup.parentNode = this;
+            }
         }
     }
 
