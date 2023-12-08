@@ -424,7 +424,11 @@ class BPlusTreeMap<K extends Comparable<K>, V> {
             int right = nodeList.size();
             while (left < right) {
                 int mid = (left + right) / 2;
-                if (nodeList.get(mid).key.compareTo(key) >= 0) {
+                K midKey = nodeList.get(mid).key;
+                if (midKey == key) {
+                    return mid;
+                }
+                if (midKey.compareTo(key) > 0) {
                     right = mid;
                     continue;
                 }
